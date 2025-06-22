@@ -1,0 +1,9 @@
+# Automatically label PRs based on changed files
+frontend:
+  - src/**/*.js
+tests:
+  - tests/**/*
+ci:
+  - .github/workflows/*
+docs:
+  - '**/*.md'
