@@ -9,9 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build (placeholder)
+            - name: Build static site
         run: |
-          echo "Add your build command here, e.g. npm run build"
+          mkdir -p dist
+          cp -R site/* dist/
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v2
         with:
