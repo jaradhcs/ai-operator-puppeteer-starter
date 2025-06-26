@@ -1,0 +1,45 @@
+name: AI Newsletter
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Run without sending email (true/false)'
+        required: false
+        default: 'true'
+  schedule:
+    - cron: '0 13 * * *' # daily at 13:00 UTC
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Generate newsletter markdown
+        run: node src/newsletter.js
+
+      - name: Upload newsletter artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: newsletter
+          path: newsletter.md
+
+      - name: Send newsletter via Buttondown
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}
+        run: |
+          curl -X POST https://api.buttondown.email/v1/emails \
+            -H "Authorization: Token $BUTTONDOWN_API_KEY" \
+            -F "subject=Daily AI Tools Roundup" \
+            -F "body=$(cat newsletter.md)"
