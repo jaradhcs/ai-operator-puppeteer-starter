@@ -1,34 +1,56 @@
-name: Run Puppeteer Script
+name: Puppeteer Task Runner
 
 on:
   workflow_dispatch:
     inputs:
+      script:
+        description: 'Path to the Puppeteer script to run (relative to repo root)'
+        required: false
+        default: 'src/index.js'
       url:
-        description: 'URL to visit'
-        required: true
-        default: 'https://example.com'
+        description: 'Optional URL passed to the script as TARGET_URL env var'
+        required: false
+        default: ''
+      extra_args:
+        description: 'Additional CLI arguments to pass to the node script'
+        required: false
+        default: ''
 
 jobs:
   puppeteer:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install --no-audit --no-fund
 
       - name: Run Puppeteer script
         env:
           TARGET_URL: ${{ github.event.inputs.url }}
-        run: node src/index.js
+          PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: 'false'
+        run: |
+          node ${{ github.event.inputs.script }} ${{ github.event.inputs.extra_args }}
 
-      - name: Upload screenshots
+      - name: Upload artifacts
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots
-          path: screenshots/
+          name: puppeteer-output
+          path: |
+            screenshots/**
+            output/**
+            results/**
+            logs/**
+            *.json
+            *.csv
+            *.txt
+            *.png
+            *.jpg
+            *.pdf
